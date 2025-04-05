@@ -13,3 +13,16 @@ An intelligent, full-stack course recommendation system powered by LLMs. Built w
 - `.env` support for API keys and configs
 - Clean folder structure (client/server)
 - Easy setup with automated script
+
+
+## 🛠 Setup Instructions
+
+After cloning the repo:
+
+```bash
+cd client
+npm install
+
+cd ../server
+npm install
+
