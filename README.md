@@ -11,9 +11,8 @@ An intelligent, full-stack course recommendation system powered by LLMs. Built w
 - REST API with Node.js and Express
 - MongoDB integration for persistent storage
 - `.env` support for API keys and configs
-- Clean folder structure (client/server)
-- Easy setup with automated script
 
+node_modules/ and .env ignored from git push
 
 ## 🛠 Setup Instructions
 
