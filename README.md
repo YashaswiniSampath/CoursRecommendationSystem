@@ -108,3 +108,8 @@ Check out the full walkthrough of the project on YouTube:
 GitHub Source Code:  
 [🔗 https://github.com/YashaswiniSampath/CoursRecommendationSystem](https://github.com/YashaswiniSampath/CoursRecommendationSystem)
 
+## 👥 Contributors
+
+- [Yashaswini Sampath](https://github.com/YashaswiniSampath) – Backend Developer, AI Integration, Full-Stack Developer  
+- [Inchara Srinivas](https://github.com/IncharaS) – Frontend Development, Chatbot Integration, Full-Stack Developer
+
