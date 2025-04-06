@@ -80,8 +80,8 @@ cd ../client
 npm install
 npm run dev
 
-Run Ollama with Gemma:2B Model
-Ensure Ollama is installed and running, then run:
+#Run Ollama with Gemma:2B Model
+#Ensure Ollama is installed and running, then run:
 
 ollama run gemma:2b
 ```
