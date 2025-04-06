@@ -110,6 +110,6 @@ GitHub Source Code:
 
 ## 👥 Contributors
 
-- [Yashaswini Sampath](https://github.com/YashaswiniSampath) – Backend Developer, AI Integration, Full-Stack Developer  
-- [Inchara Srinivas](https://github.com/IncharaS) – Frontend Development, Chatbot Integration, Full-Stack Developer
+- [Yashaswini Sampath](https://github.com/YashaswiniSampath) – Backend Developer, Chatbot Integration, Full-Stack Developer  
+- [Inchara Srinivas](https://github.com/IncharaS) – Frontend Development, AI Integration, Full-Stack Developer
 
