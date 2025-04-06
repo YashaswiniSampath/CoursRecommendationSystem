@@ -3,8 +3,8 @@ const router = express.Router();
 const Course = require('../models/Course');
 const Historic = require('../models/Historic');
 const { getSeatPopularity } = require('../utils/query');
-const { getLLMResponse } = require('../utils/llm');
-const { parseLLMOutput } = require('../utils/llm');
+const { getLLMResponse, parseLLMOutput } = require('../utils/llm');
+const axios = require('axios');
 
 router.get('/course', async (req, res) => {
   const courses = await Course.find();
@@ -16,70 +16,156 @@ router.get('/historics', async (req, res) => {
     res.json(historic);
   });
 
-  router.post('/recommend', async (req, res) => {
-    try {
-      const input = req.body.input;
-  
-      // Fetch all courses and enrich with popularity
-      const courses = await Course.find();
-      const courseInfo = await Promise.all(
-        courses.map(async (c) => {
-          const popularity = await getSeatPopularity(c.CourseName);
-          return `${c.CourseName} - ${c.Description}, Credits: ${c.Credits}, Time: ${c.Time}, Popularity: ${popularity}`;
-        })
-      );
-  
-      // Construct prompt for LLM
-      const prompt = `
-  You are an AI course advisor. Here are available courses:
-  
-  ${courseInfo.join('\n')}
-  
-  The student says:
-  """${JSON.stringify(input)}"""
-  
-  Recommend courses that fit their field of interest/title or job role, with no time conflict schedule, and the user has already taken prerequisite courses.
-  Check the remaining number of credits they require given that maximum credit can be 30.
-  Give top 3 courses and if unavailable suggest 2 other courses of the same credit.
-  Also always mention what could be the career path taking these courses and what job titles they can end up as.
-  Respond in plain English.
-      `;
-  
-      const llmResponse = await getLLMResponse(prompt); // returns text
-    //   const parsed = parseLLMOutput(llmResponse);       // extract topCourses, careerPath
-  
-      // Add seat info to top courses
-      const updatedCourses = await Promise.all(
-        llmResponse.topCourses.map(async (course) => {
-          const dbCourse = await Course.findOne({ CourseName: course.name });
-          return {
-            ...course,
-            seats: dbCourse ? dbCourse.AvailableSlots : 'Unknown'
-          };
-        })
-      );
-  
-      res.json({
-        topCourses: updatedCourses,
-        careerPath: llmResponse.careerPath,
-        jobTitles: llmResponse.jobTitles
+
+// server/routes.js (your recommend API)
+
+
+router.post('/recommend', async (req, res) => {
+  try {
+    const input = req.body.input;
+    const { title, skills, selectedCourses: userPastCourses, credits: desiredCredits, fullTime } = input;
+
+    const allCourses = await Course.find();
+    const skillsArray = skills.toLowerCase().split(',').map(s => s.trim());
+    const interestKeywords = [title.toLowerCase(), ...skillsArray];
+
+    let filteredCourses = [];
+
+    for (const course of allCourses) {
+      if (userPastCourses.includes(course.CourseName)) continue;
+
+      const isFullTimeCourse = course.FPTime?.toLowerCase() === 'fulltime';
+      if ((fullTime && !isFullTimeCourse) || (!fullTime && isFullTimeCourse)) continue;
+
+      if (course.Prerequisite && !userPastCourses.includes(course.Prerequisite)) continue;
+
+      const desc = (course.Description || '').toLowerCase();
+      let matchScore = interestKeywords.reduce((score, keyword) => {
+        return desc.includes(keyword) ? score + 1 : score;
+      }, 0);
+
+      const popularity = await getSeatPopularity(course.CourseName);
+
+      filteredCourses.push({
+        ...course._doc,
+        matchScore,
+        popularity,
+        isFull: course.AvailableSlots === 0
       });
-  
-    } catch (err) {
-      console.error('❌ /recommend failed:', err);
-      res.status(500).json({ error: 'Failed to generate recommendations' });
     }
-  });
-  
+
+    filteredCourses.sort((a, b) => b.matchScore - a.matchScore);
+    const topCourses = filteredCourses.slice(0, 7);
+
+    const courseInfo = topCourses.map(c => {
+      const seatsInfo = c.TotalSeats ? `${c.AvailableSlots}/${c.TotalSeats}` : 'Unknown seats';
+      let line = `${c.CourseName} - ${c.Description}, Credits: ${c.Credits}, Time: ${c.Time}, Seats: ${seatsInfo}, Popularity: ${c.popularity}`;
+
+      if (c.Prerequisite && userPastCourses.includes(c.Prerequisite)) {
+        line += ` (Prerequisite Met ✅)`;
+      }
+
+      if (c.isFull) {
+        line += ` (⚠️ Course Full - suggest alternative if needed)`;
+      }
+
+      return line;
+    });
+
+    const prompt = `
+You are an expert AI academic advisor.
+
+Here is a list of available courses:
+${courseInfo.join('\n')}
+
+Student Profile:
+"""${JSON.stringify(input)}"""
+
+Selection Rules:
+- Recommend a combination of courses that match the student's requested ${desiredCredits} credits.
+- Match the student's enrollment type (${fullTime ? "Full-Time" : "Part-Time"}).
+- Prefer courses that match the student's interests, field, and skills.
+- Prefer highly sought-after courses when possible.
+- Prefer courses where seats are still available.
+- If a course is marked ⚠️ Full, mention it but suggest an alternative course nearby.
+- If a course shows (Prerequisite Met ✅), prefer recommending it.
+- Avoid recommending any course the student has already completed.
+- Ensure no time conflicts between selected courses.
+- Pick courses only from list of available courses
+- no of seats and avaiable total should be fetched from courses table
+
+Respond exactly in this format maintain this format always:
+
+---
+
+**Top Recommended Courses**  
+== Course Name-Credits-Time-Seats Available-Total seats available-Popularity =$$
+== Course Name-Credits-Time-Seats Available-Total seats available-Popularity =$$
+
+**Additional Courses You Could Consider**  
+= Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
+= Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
+= Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
+
+**Career Roadmap**  
+(One or two sentences how these courses will help the student to achive teh desierd job roles/career path)
+
+**Potential Job Titles**  
+- Title 1
+- Title 2
+- Title 3
+
+---
+`;
+
+    // const llmRawResponse = await getLLMResponse(prompt);
+
+    // const parsed = parseLLMOutput(llmRawResponse.response); // ✅ now parsing properly
+    //parseLLMOutput is returning 
+  //     return {
+  //   topCourses,
+  //   additionalCourses,
+  //   careerPath,
+  //   jobTitles
+  // }
+    const llmParsed = await getLLMResponse(prompt);
+
+    res.json({
+      topCourses: llmParsed.topCourses,
+      additionalCourses: llmParsed.additionalCourses,
+      careerPath: llmParsed.careerPath,
+      jobTitles: llmParsed.jobTitles
+    });
+
+  } catch (err) {
+    console.error('❌ /recommend error:', err);
+    res.status(500).json({ error: 'Failed to generate recommendations' });
+  }
+});
+
 
 router.post('/finalize', async (req, res) => {
-  const course = await Course.findOne({ CourseName: req.body.courseName });
-  if (course && course.AvailableSlots > 0) {
-    course.AvailableSlots -= 1;
-    await course.save();
+  const { courseNames } = req.body; // ✅ Expect an array of course names
+
+  if (!Array.isArray(courseNames)) {
+    return res.status(400).json({ error: "courseNames must be an array." });
   }
-  res.json({ success: true });
+
+  try {
+    for (const courseName of courseNames) {
+      const course = await Course.findOne({ CourseName: courseName });
+      if (course && course.AvailableSlots > 0) {
+        course.AvailableSlots -= 1;
+        await course.save();
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error finalizing courses:', err);
+    res.status(500).json({ error: 'Failed to finalize courses.' });
+  }
 });
+
 
 router.get('/test', async (req, res) => {
     try {
@@ -89,7 +175,35 @@ router.get('/test', async (req, res) => {
       res.status(500).json({ status: 'MongoDB not connected ❌', error: err.message });
     }
   });
-  
 
+
+  router.post('/chat', async (req, res) => {
+const { contextSummary, question } = req.body;
+
+const chatPrompt = `
+You are an academic advisor chatbot.
+
+Student profile:
+${contextSummary}
+
+Now answer the student's question:
+"""${question}"""
+`;
+
+  
+  try {
+    const llamaResponse = await axios.post('http://localhost:11434/api/generate', {
+      model: 'gemma:2b', // Change this to the model name you're running
+      prompt: chatPrompt,
+      stream: false // use `true` for streaming responses
+    });
+
+    const aiReply = llamaResponse.data.response;
+    res.json({ reply: aiReply });
+  } catch (err) {
+    console.error('❌ Error talking to LLaMA:', err.message);
+    res.status(500).json({ reply: "Sorry, the AI is currently unavailable." });
+  }
+});
 
 module.exports = router;

@@ -1,0 +1,118 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0; /* Light grey */
+  font-family: Arial, sans-serif;
+}
+
+.screen1-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.form-box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 700px;
+}
+
+.form-title {
+  color: rgb(167, 24, 52);
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.form-subtitle {
+  color: grey;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+}
+
+.courses-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.department-section {
+  width: 45%;
+}
+
+.department-title {
+  font-size: 18px;
+  color: rgb(167, 24, 52);
+  margin-bottom: 8px;
+}
+
+.courses-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: rgb(167, 24, 52); /* Keep important field labels rgb(167, 24, 52) */
+  font-size: 18px; /* default label size */
+}
+
+.form-group.past-courses-label {
+  font-size: 10px; /* 👈 Bigger font size for 'Past courses taken' */
+  color: rgb(167, 24, 52);
+}
+
+.course-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.disclaimer {
+  font-size: 12px; /* 👈 Small font */
+  color: rgb(167, 24, 52); /* 👈 rgb(167, 24, 52) color for disclaimer */
+  margin-bottom: 10px;
+  margin-top: -8px;
+}
+
+.submit-btn-wrapper {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.submit-btn {
+  background-color: rgb(167, 24, 52);
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: rgb(217, 30, 67);
+}
