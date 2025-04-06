@@ -25,55 +25,60 @@ async function getLLMResponse(prompt) {
   
 
   function parseLLMOutput(text) {
-    // if (!text || typeof text !== 'string') {
-    //   console.warn('Invalid LLM output:', text);
-    //   return { topCourses: [], careerPath: '', jobTitles: [] };
-    // }
-    console.log(text)
-    // 🔍 Get only the "**Top 3:**" block
+    if (!text || typeof text !== 'string') {
+      console.warn('Invalid LLM output:', text);
+      return { topCourses: [], careerPath: '', jobTitles: [] };
+    }
   
-
-  // ✅ Match: **Course Name** (X credits)
-  const courseRegex = /\*\*(.*?)\*\*\s*\((\d+)\scredits?\)/g;
-  const topCourses = [];
-  let match;
-
-  while ((match = courseRegex.exec(text)) !== null && topCourses.length < 3) {
-    topCourses.push({
-      name: match[1].trim(),
-      credits: parseInt(match[2]),
-      seats: 0
-    });
-  }
-
-  console.log('🎯 Extracted Top 3 Courses:', topCourses);
+    console.log('📥 Raw LLM Output:\n', text);
   
-    // 2. Extract Career Path
-  const careerMatch = text.match(/\*\*Career Path:\*\*\s*(.*)/i);
-  const careerPath = careerMatch ? careerMatch[1].trim() : '';
-  console.log('🛣️ Career Path:', careerPath);
+    // 1. Extract Top 3 Courses
+    const topCourses = [];
+  const lines = text.split('\n');
 
-  // 3. Extract Job Titles
-  const jobTitles = [];
-  const jobSection = text.split(/\*\*Job Titles:\*\*/i)[1];
+  const courseRegex = /^\d+\.\s*\*\*(.*?)\s*\((\d+)\s*credits?,\s*(.*?),\s*(\d+)\s*seats\)\*\*/;
 
-  if (jobSection) {
-    const lines = jobSection.split('\n').map(l => l.trim()).filter(Boolean);
-    for (const line of lines) {
-      if (line.startsWith('*') || line.startsWith('-')) {
-        jobTitles.push(line.replace(/^[-*]\s*/, '').trim());
+  for (const line of lines) {
+    const match = line.match(courseRegex);
+    if (match && topCourses.length < 3) {
+      topCourses.push({
+        name: match[1].trim(),
+        credits: parseInt(match[2]),
+        time: match[3].trim(),
+        seats: parseInt(match[4]),
+      });
+    }
+}
+  
+    console.log('🎯 Extracted Top 3 Courses:', topCourses);
+  
+    // 2. Extract Suggested Career Path
+    const careerMatch = text.match(/\*\*Suggested Career Path\*\*\s*(.+?)\n/i);
+    const careerPath = careerMatch ? careerMatch[1].trim() : '';
+    console.log('🛣️ Career Path:', careerPath);
+  
+    // 3. Extract Job Titles
+    const jobTitles = [];
+    const jobSection = text.split(/\*\*Potential Job Titles\*\*/i)[1];
+  
+    if (jobSection) {
+      const lines = jobSection.split('\n').map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        if (line.startsWith('*') || line.startsWith('-')) {
+          jobTitles.push(line.replace(/^[-*]\s*/, '').trim());
+        }
       }
     }
+  
+    console.log('💼 Job Titles:', jobTitles);
+  
+    return {
+      topCourses,
+      careerPath,
+      jobTitles
+    };
   }
-
-  console.log('💼 Job Titles:', jobTitles);
-
-  return {
-    topCourses,
-    careerPath,
-    jobTitles
-  };
-}
+  
 
   
 

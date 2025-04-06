@@ -5,6 +5,7 @@ const Historic = require('../models/Historic');
 const { getSeatPopularity } = require('../utils/query');
 const { getLLMResponse } = require('../utils/llm');
 const { parseLLMOutput } = require('../utils/llm');
+const axios = require('axios');
 
 router.get('/course', async (req, res) => {
   const courses = await Course.find();
@@ -31,19 +32,38 @@ router.get('/historics', async (req, res) => {
   
       // Construct prompt for LLM
       const prompt = `
-  You are an AI course advisor. Here are available courses:
-  
-  ${courseInfo.join('\n')}
-  
-  The student says:
-  """${JSON.stringify(input)}"""
-  
-  Recommend courses that fit their field of interest/title or job role, with no time conflict schedule, and the user has already taken prerequisite courses.
-  Check the remaining number of credits they require given that maximum credit can be 30.
-  Give top 3 courses and if unavailable suggest 2 other courses of the same credit.
-  Also always mention what could be the career path taking these courses and what job titles they can end up as.
-  Respond in plain English.
-      `;
+You are an AI course advisor. Your job is to recommend courses from the following list, considering the student's interests, schedule, and eligibility.
+
+Here are the available courses:
+${courseInfo.join('\n')}
+
+The student says:
+"""${JSON.stringify(input)}"""
+
+Please respond with the following structured format:
+
+---
+
+**Top 3 Recommended Courses**  
+(List the 3 best courses that match the student's interests, have no time conflicts, and for which all prerequisites are satisfied.)
+
+1. Course Name (X credits, Day Time, Y seats)
+2. Course Name (X credits, Day Time, Y seats)
+3. Course Name (X credits, Day Time, Y seats)
+
+**Suggested Career Path**  
+(Briefly explain — in 1-2 lines — how these courses contribute to the student's long-term academic or career goals.)
+
+**Potential Job Titles**  
+(List 2–4 roles the student could apply for after completing the recommended courses.)
+
+---
+
+📌 Additional Notes:
+- Ensure the total number of credits (including already completed courses, found in the user input) does **not exceed 30**.
+- If 3 ideal courses are not available, suggest 2 alternative courses of similar credit value.
+- Be concise and respond in plain English.
+`;
   
       const llmResponse = await getLLMResponse(prompt); // returns text
     //   const parsed = parseLLMOutput(llmResponse);       // extract topCourses, careerPath
@@ -89,7 +109,40 @@ router.get('/test', async (req, res) => {
       res.status(500).json({ status: 'MongoDB not connected ❌', error: err.message });
     }
   });
-  
 
+
+  router.post('/chat', async (req, res) => {
+    const { userInput, llmResponse, message } = req.body;
+  
+    const chatPrompt = `
+  You are an academic course advisor chatbot. The student was previously recommended the following:
+  
+  Top Courses:
+  ${llmResponse.topCourses.join('\n')}
+  
+  Career Path: ${llmResponse.careerPath}
+  Job Titles: ${llmResponse.jobTitles.join(', ')}
+  
+  Student Profile:
+  ${JSON.stringify(userInput)}
+  
+  Now, answer this follow-up question in simple, friendly language, when asked why certain course is recommended exlain how it algins with the requested field they asked for:
+  """${message}"""
+  `;
+  
+  try {
+    const llamaResponse = await axios.post('http://localhost:11434/api/generate', {
+      model: 'gemma:2b', // Change this to the model name you're running
+      prompt: chatPrompt,
+      stream: false // use `true` for streaming responses
+    });
+
+    const aiReply = llamaResponse.data.response;
+    res.json({ reply: aiReply });
+  } catch (err) {
+    console.error('❌ Error talking to LLaMA:', err.message);
+    res.status(500).json({ reply: "Sorry, the AI is currently unavailable." });
+  }
+});
 
 module.exports = router;
