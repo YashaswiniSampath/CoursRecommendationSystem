@@ -3,6 +3,29 @@
 An intelligent, full-stack academic course recommendation platform powered by LLMs. Built with a **Node.js + Express** backend and a **React** frontend, the system generates tailored course suggestions based on user preferences, academic history, and career goals.
 
 ---
+## 🧱 Tech Stack
+
+**Frontend:**  
+- React  
+- Axios 
+
+**Backend:**  
+- Node.js  
+- Express.js  
+- REST API architecture
+
+**Database:**  
+- MongoDB  
+- Mongoose (for schema-based modeling)
+
+**AI Integration:**  
+- Ollama Runtime (local LLM engine)  
+- Gemma:2B LLM for generating course recommendations and chat responses
+
+**Development & Hosting:**  
+- Vite (for local frontend development)  
+- Ollama server running locally for LLM inference
+---
 
 ## 💬 Chatbot Integration
 
