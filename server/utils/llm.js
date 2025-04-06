@@ -1,28 +1,29 @@
 const axios = require('axios');
 
 async function getLLMResponse(prompt) {
-    try {
-      const response = await axios.post('http://localhost:11434/api/generate', {
-        model: 'wizardlm2:7b',
-        prompt: prompt,
-        stream: false
-      });
-  
-      console.log('🧠 LLM raw response:', response.data); // 👈 Add this!
-      
-      const raw = response.data.response; // may be undefined or object
-      console.log('-----------------',raw)
-      if (typeof raw !== 'string') {
-        throw new Error('LLM response is not a string');
-      }
-  
-      return parseLLMOutput(raw);
-    } catch (error) {
-      console.error('Ollama LLM error:', error.message);
-      return { topCourses: [], careerPath: 'Error generating response.' };
+  try {
+    const response = await axios.post('http://localhost:11434/api/generate', {
+      model: 'gemma:2b',
+      prompt: prompt,
+      stream: false
+    });
+
+    console.log('LLM raw response:', response.data);
+
+    const raw = response.data.response;
+    console.log('----------------- Raw Response -----------------\n', raw);
+
+    if (typeof raw !== 'string') {
+      throw new Error('LLM response is not a string');
     }
+
+    return parseLLMOutput(raw);
+  } catch (error) {
+    console.error('Ollama LLM error:', error.message);
+    return { topCourses: [], additionalCourses: [], careerPath: 'Error generating response.', jobTitles: [] };
   }
-  
+}
+
 function parseLLMOutput(text) {
   if (!text || typeof text !== 'string') {
     console.warn('Invalid LLM output:', text);
@@ -64,26 +65,22 @@ function parseLLMOutput(text) {
       continue;
     }
 
-    // Match courses wrapped between = ** ... ** =
-    if (trimmedLine.startsWith('= **') && trimmedLine.endsWith('=$')) {
-      let cleanLine = trimmedLine.slice(3, -3); // remove = ** and ** =
-      
-      // Remove (Prerequisite Met ✅) or any text after ')'
-      cleanLine = cleanLine.split('(')[0].trim();
+    // Match lines starting with "=" and split by hyphens
+    if (trimmedLine.startsWith('=')) {
+      let cleanLine = trimmedLine.replace(/^==\s*/, ''); // Remove '=' or '= '
 
-      // Now split by hyphens
       const parts = cleanLine.split('-').map(p => p.trim()).filter(Boolean);
-
+      console.log(parts)
       if (parts.length >= 5) {
         const course = {
           name: parts[0],
-          credits: parseInt(parts[1].replace('credits', '').trim()),
+          credits: isNaN(parseInt(parts[1])) ? null : parseInt(parts[1]),
           time: parts[2],
-          seatsInfo: parts[3],  // Seats Available or ⚠️ Full
-          popularity: parts[4].replace('Popularity:', '').trim()
+          seatsInfo: parts[3],
+          popularity: parts[4]
         };
 
-        // Optional: Skip full courses
+        // Skip full courses if needed
         if (course.seatsInfo.includes('Full')) {
           console.warn('⚠️ Skipping full course:', course.name);
           continue;
@@ -98,7 +95,7 @@ function parseLLMOutput(text) {
     }
   }
 
-  // Parse Job Titles
+  // Parse job titles from last section
   const jobTitles = [];
   const jobTitlesSection = text.split('**Potential Job Titles**')[1];
   if (jobTitlesSection) {
@@ -115,7 +112,5 @@ function parseLLMOutput(text) {
     jobTitles
   };
 }
-
-
 
 module.exports = { getLLMResponse, parseLLMOutput };

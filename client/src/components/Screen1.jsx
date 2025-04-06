@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Screen1.css'; // ✅ New CSS file
+import './Screen1.css'; // New CSS file
 
 export default function Screen1({ setScreen, setUserInput, setLlmResponse }) {
   const [input, setInput] = useState({

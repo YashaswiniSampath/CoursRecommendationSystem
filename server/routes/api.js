@@ -92,14 +92,15 @@ Selection Rules:
 - Avoid recommending any course the student has already completed.
 - Ensure no time conflicts between selected courses.
 - Pick courses only from list of available courses
+- no of seats and avaiable total should be fetched from courses table
 
-Respond exactly in this format:
+Respond exactly in this format maintain this format always:
 
 ---
 
 **Top Recommended Courses**  
-= Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
-= Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
+== Course Name-Credits-Time-Seats Available-Total seats available-Popularity =$$
+== Course Name-Credits-Time-Seats Available-Total seats available-Popularity =$$
 
 **Additional Courses You Could Consider**  
 = Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
@@ -107,7 +108,7 @@ Respond exactly in this format:
 = Course Name-Credits-Day/Time-Seats Available-Total-Popularity =$
 
 **Career Roadmap**  
-(One or two sentences.)
+(One or two sentences how these courses will help the student to achive teh desierd job roles/career path)
 
 **Potential Job Titles**  
 - Title 1
@@ -192,7 +193,7 @@ Now answer the student's question:
   
   try {
     const llamaResponse = await axios.post('http://localhost:11434/api/generate', {
-      model: 'wizardlm2:7b', // Change this to the model name you're running
+      model: 'gemma:2b', // Change this to the model name you're running
       prompt: chatPrompt,
       stream: false // use `true` for streaming responses
     });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Screen2.css'; // ✅ New CSS for screen 2
+import './Screen2.css'; // New CSS for screen 2
 
 export default function Screen2({ userInput, llmResponse, setScreen }) {
   console.log(llmResponse)
@@ -13,12 +13,12 @@ export default function Screen2({ userInput, llmResponse, setScreen }) {
 const finalize = async () => {
   if (selectedCourses.length > 0) {
     await axios.post('/api/finalize', { courseNames: selectedCourses });
-    setSelectedCourses([]);        // ✅ Clear selected courses
+    setSelectedCourses([]);        // Clear selected courses
     setChatMessages([
       { sender: 'bot', text: 'Hi! Ask me anything about your recommended courses.' }
-    ]);                            // ✅ Reset chatbot
-    setUserQuery('');              // ✅ Clear user input
-    setScreen(1);                  // ✅ Go back to Screen1
+    ]);                            // Reset chatbot
+    setUserQuery('');              // Clear user input
+    setScreen(1);                  // Go back to Screen1
   }
 };
 
@@ -31,7 +31,7 @@ const finalize = async () => {
     setUserQuery('');
 
     try {
-    await axios.post('/api/chat', {
+      const response = await axios.post('/api/chat', {
   contextSummary: `
 Student is interested in: ${userInput.title}
 Skills: ${userInput.skills}
