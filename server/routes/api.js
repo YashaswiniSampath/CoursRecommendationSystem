@@ -62,7 +62,7 @@ router.post('/recommend', async (req, res) => {
       let line = `${c.CourseName} - ${c.Description}, Credits: ${c.Credits}, Time: ${c.Time}, Seats: ${seatsInfo}, Popularity: ${c.popularity}`;
 
       if (c.Prerequisite && userPastCourses.includes(c.Prerequisite)) {
-        line += ` (Prerequisite Met ✅)`;
+        line += ` (Prerequisite Met)`;
       }
 
       if (c.isFull) {
@@ -88,7 +88,7 @@ Selection Rules:
 - Prefer highly sought-after courses when possible.
 - Prefer courses where seats are still available.
 - If a course is marked ⚠️ Full, mention it but suggest an alternative course nearby.
-- If a course shows (Prerequisite Met ✅), prefer recommending it.
+- If a course shows (Prerequisite Met), prefer recommending it.
 - Avoid recommending any course the student has already completed.
 - Ensure no time conflicts between selected courses.
 - Pick courses only from list of available courses
@@ -120,7 +120,7 @@ Respond exactly in this format maintain this format always:
 
     // const llmRawResponse = await getLLMResponse(prompt);
 
-    // const parsed = parseLLMOutput(llmRawResponse.response); // ✅ now parsing properly
+    // const parsed = parseLLMOutput(llmRawResponse.response); // now parsing properly
     //parseLLMOutput is returning 
   //     return {
   //   topCourses,
@@ -138,14 +138,14 @@ Respond exactly in this format maintain this format always:
     });
 
   } catch (err) {
-    console.error('❌ /recommend error:', err);
+    console.error('/recommend error:', err);
     res.status(500).json({ error: 'Failed to generate recommendations' });
   }
 });
 
 
 router.post('/finalize', async (req, res) => {
-  const { courseNames } = req.body; // ✅ Expect an array of course names
+  const { courseNames } = req.body; //  Expect an array of course names
 
   if (!Array.isArray(courseNames)) {
     return res.status(400).json({ error: "courseNames must be an array." });
@@ -161,7 +161,7 @@ router.post('/finalize', async (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Error finalizing courses:', err);
+    console.error('Error finalizing courses:', err);
     res.status(500).json({ error: 'Failed to finalize courses.' });
   }
 });
@@ -170,9 +170,9 @@ router.post('/finalize', async (req, res) => {
 router.get('/test', async (req, res) => {
     try {
       await mongoose.connection.db.admin().ping(); // Ping the DB
-      res.json({ status: 'MongoDB connected ✅' });
+      res.json({ status: 'MongoDB connected ' });
     } catch (err) {
-      res.status(500).json({ status: 'MongoDB not connected ❌', error: err.message });
+      res.status(500).json({ status: 'MongoDB not connected ', error: err.message });
     }
   });
 
@@ -201,7 +201,7 @@ Now answer the student's question:
     const aiReply = llamaResponse.data.response;
     res.json({ reply: aiReply });
   } catch (err) {
-    console.error('❌ Error talking to LLaMA:', err.message);
+    console.error('Error talking to LLaMA:', err.message);
     res.status(500).json({ reply: "Sorry, the AI is currently unavailable." });
   }
 });
