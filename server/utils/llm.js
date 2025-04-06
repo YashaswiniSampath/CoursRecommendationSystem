@@ -3,7 +3,7 @@ const axios = require('axios');
 async function getLLMResponse(prompt) {
     try {
       const response = await axios.post('http://localhost:11434/api/generate', {
-        model: 'gemma:2b',
+        model: 'wizardlm2:7b',
         prompt: prompt,
         stream: false
       });
@@ -23,63 +23,99 @@ async function getLLMResponse(prompt) {
     }
   }
   
+function parseLLMOutput(text) {
+  if (!text || typeof text !== 'string') {
+    console.warn('Invalid LLM output:', text);
+    return { topCourses: [], additionalCourses: [], careerPath: '', jobTitles: [] };
+  }
 
-  function parseLLMOutput(text) {
-    if (!text || typeof text !== 'string') {
-      console.warn('Invalid LLM output:', text);
-      return { topCourses: [], careerPath: '', jobTitles: [] };
-    }
-  
-    console.log('📥 Raw LLM Output:\n', text);
-  
-    // 1. Extract Top 3 Courses
-    const topCourses = [];
+  console.log('📥 Raw LLM Output:\n', text);
+
   const lines = text.split('\n');
+  const topCourses = [];
+  const additionalCourses = [];
 
-  const courseRegex = /^\d+\.\s*\*\*(.*?)\s*\((\d+)\s*credits?,\s*(.*?),\s*(\d+)\s*seats\)\*\*/;
+  let currentSection = 'top';
+  let careerPath = '';
+  let captureCareerPath = false;
 
   for (const line of lines) {
-    const match = line.match(courseRegex);
-    if (match && topCourses.length < 3) {
-      topCourses.push({
-        name: match[1].trim(),
-        credits: parseInt(match[2]),
-        time: match[3].trim(),
-        seats: parseInt(match[4]),
-      });
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.includes('**Top Recommended Courses**')) {
+      currentSection = 'top';
+      continue;
     }
-}
-  
-    console.log('🎯 Extracted Top 3 Courses:', topCourses);
-  
-    // 2. Extract Suggested Career Path
-    const careerMatch = text.match(/\*\*Suggested Career Path\*\*\s*(.+?)\n/i);
-    const careerPath = careerMatch ? careerMatch[1].trim() : '';
-    console.log('🛣️ Career Path:', careerPath);
-  
-    // 3. Extract Job Titles
-    const jobTitles = [];
-    const jobSection = text.split(/\*\*Potential Job Titles\*\*/i)[1];
-  
-    if (jobSection) {
-      const lines = jobSection.split('\n').map(l => l.trim()).filter(Boolean);
-      for (const line of lines) {
-        if (line.startsWith('*') || line.startsWith('-')) {
-          jobTitles.push(line.replace(/^[-*]\s*/, '').trim());
+    if (trimmedLine.includes('**Additional Courses You Could Consider**')) {
+      currentSection = 'additional';
+      continue;
+    }
+    if (trimmedLine.includes('**Career Roadmap**')) {
+      captureCareerPath = true;
+      continue;
+    }
+    if (trimmedLine.includes('**Potential Job Titles**')) {
+      captureCareerPath = false;
+      continue;
+    }
+
+    if (captureCareerPath) {
+      careerPath += trimmedLine + ' ';
+      continue;
+    }
+
+    // Match courses wrapped between = ** ... ** =
+    if (trimmedLine.startsWith('= **') && trimmedLine.endsWith('=$')) {
+      let cleanLine = trimmedLine.slice(3, -3); // remove = ** and ** =
+      
+      // Remove (Prerequisite Met ✅) or any text after ')'
+      cleanLine = cleanLine.split('(')[0].trim();
+
+      // Now split by hyphens
+      const parts = cleanLine.split('-').map(p => p.trim()).filter(Boolean);
+
+      if (parts.length >= 5) {
+        const course = {
+          name: parts[0],
+          credits: parseInt(parts[1].replace('credits', '').trim()),
+          time: parts[2],
+          seatsInfo: parts[3],  // Seats Available or ⚠️ Full
+          popularity: parts[4].replace('Popularity:', '').trim()
+        };
+
+        // Optional: Skip full courses
+        if (course.seatsInfo.includes('Full')) {
+          console.warn('⚠️ Skipping full course:', course.name);
+          continue;
+        }
+
+        if (currentSection === 'top') {
+          topCourses.push(course);
+        } else if (currentSection === 'additional') {
+          additionalCourses.push(course);
         }
       }
     }
-  
-    console.log('💼 Job Titles:', jobTitles);
-  
-    return {
-      topCourses,
-      careerPath,
-      jobTitles
-    };
   }
-  
 
-  
+  // Parse Job Titles
+  const jobTitles = [];
+  const jobTitlesSection = text.split('**Potential Job Titles**')[1];
+  if (jobTitlesSection) {
+    const titles = jobTitlesSection.split('\n')
+      .map(t => t.trim())
+      .filter(t => (t.startsWith('-') || t.startsWith('*')) && t.length > 2);
+    titles.forEach(t => jobTitles.push(t.replace(/^[-*]\s*/, '').trim()));
+  }
+
+  return {
+    topCourses,
+    additionalCourses,
+    careerPath: careerPath.trim(),
+    jobTitles
+  };
+}
+
+
 
 module.exports = { getLLMResponse, parseLLMOutput };

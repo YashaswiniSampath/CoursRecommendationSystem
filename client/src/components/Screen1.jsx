@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './Screen1.css'; // ✅ New CSS file
 
 export default function Screen1({ setScreen, setUserInput, setLlmResponse }) {
   const [input, setInput] = useState({
@@ -9,101 +10,114 @@ export default function Screen1({ setScreen, setUserInput, setLlmResponse }) {
 
   useEffect(() => {
     axios.get('/api/course')
-      .then(res => setCourseList(res.data))
-      .catch(console.error);
+      .then(res => setCourseList(res.data));
   }, []);
 
-  const handleSubmit = async () => {
-    setUserInput(input);
-    const res = await axios.post('/api/recommend', { input });
-    setLlmResponse(res.data);
-    setScreen(2);
-  };
+const handleSubmit = async () => {
+  setUserInput(input);
+  const res = await axios.post('/api/recommend', { input });
+  setLlmResponse(res.data);
+  setScreen(2);
+};
+
+
+  // Group courses by Department
+  const groupedCourses = courseList.reduce((groups, course) => {
+    const dept = course.Department || "Other";
+    if (!groups[dept]) groups[dept] = [];
+    groups[dept].push(course);
+    return groups;
+  }, {});
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 py-10 px-4 flex justify-center">
-      <div className="bg-white shadow-md rounded-xl p-10 w-full max-w-2xl space-y-8">
-        {/* Title */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-blue-800">AI Course Recommendation Form</h1>
-          <p className="text-gray-600 mt-2">Fill in the details to get personalized course recommendations</p>
-        </div>
-  
-        {/* Field: Field of Interest */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-medium text-gray-700">Field of interest or job role</label>
+    <div className="screen1-container">
+      <div className="form-box">
+        <h1 className="form-title">Smart Course Picks</h1>
+        <p className="form-subtitle">Fill the details below for personalized suggestions</p>
+
+        <div className="form-group">
+          <label>Field of interest or job role</label>
           <input
             type="text"
             placeholder="e.g., Data Science"
-            className="p-3 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            value={input.title}
             onChange={(e) => setInput({ ...input, title: e.target.value })}
           />
         </div>
-  
-        {/* Field: Skills */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-medium text-gray-700">Skills to develop</label>
+
+        <div className="form-group">
+          <label>Skills to develop</label>
           <input
             type="text"
             placeholder="e.g., Python, Machine Learning"
-            className="p-3 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            value={input.skills}
             onChange={(e) => setInput({ ...input, skills: e.target.value })}
           />
         </div>
-  
-        {/* Field: Remaining Credits */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-medium text-gray-700">Remaining credits</label>
+
+        <div className="form-group">
+          <label>Credits to Enroll</label>
           <input
             type="number"
             placeholder="e.g., 10"
-            className="p-3 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            value={input.credits}
             onChange={(e) => setInput({ ...input, credits: +e.target.value })}
           />
         </div>
-  
-        {/* Field: Enrollment Type */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-medium text-gray-700">Enrollment type</label>
+
+        <div className="form-group">
+          <label>Enrollment type</label>
           <select
-            className="p-3 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            value={input.fullTime}
             onChange={(e) => setInput({ ...input, fullTime: e.target.value === 'true' })}
           >
             <option value="true">Full-Time</option>
             <option value="false">Part-Time</option>
           </select>
         </div>
-  
-        {/* Field: Past Courses */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-medium text-gray-700">Past courses taken</label>
-          <select
-            multiple
-            className="p-3 border rounded-md h-32 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            onChange={(e) => {
-              const selected = [...e.target.selectedOptions].map(o => o.value);
-              setInput({ ...input, selectedCourses: selected });
-            }}
-          >
-            {courseList.map(c => (
-              <option key={c.CourseID} value={c.CourseName}>
-                {c.CourseName}
-              </option>
-            ))}
-          </select>
+
+<div className="form-group">
+  <label className="past-courses-label">Past courses taken</label> {/* ✅ Use new label class */}
+  <p className="disclaimer">(F) = Full-Time, (P) = Part-Time</p>
+
+  <div className="courses-grid">
+    {Object.keys(groupedCourses).map((dept) => (
+      <div key={dept} className="department-section">
+        <h3 className="department-title">{dept}</h3>
+        <div className="courses-options">
+{groupedCourses[dept].map((c) => (
+  <label key={c.CourseID} className="course-option" style={{ color: '#333333', fontSize: '14px' }}>
+    <input
+      type="checkbox"
+      name="selectedCourses"
+      value={c.CourseName}
+      checked={input.selectedCourses.includes(c.CourseName)}
+      onChange={(e) => {
+        const course = e.target.value;
+        const selected = input.selectedCourses.includes(course)
+          ? input.selectedCourses.filter(item => item !== course)
+          : [...input.selectedCourses, course];
+        setInput({ ...input, selectedCourses: selected });
+      }}
+    />
+    {c.CourseName} ({c.FPTime?.toLowerCase() === 'fulltime' ? 'F' : 'P'})
+  </label>
+))}
+
         </div>
-  
-        {/* Submit Button */}
-        <div className="text-center">
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-700 transition-all text-white font-semibold px-6 py-3 rounded-full shadow-md"
-          >
-            🚀 Recommend Courses
+      </div>
+    ))}
+  </div>
+</div>
+
+
+
+        <div className="submit-btn-wrapper">
+          <button onClick={handleSubmit} className="submit-btn">
+            Recommend Courses
           </button>
         </div>
       </div>
     </div>
   );
-  
-}  
+}

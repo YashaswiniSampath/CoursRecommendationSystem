@@ -1,0 +1,144 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0; /* Light grey background */
+  font-family: Arial, sans-serif;
+}
+
+.screen2-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  padding: 40px;
+}
+
+.content-box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 700px;
+}
+
+.section-title {
+  color: crimson;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  color: crimson;
+  font-size: 20px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+
+.regular-text {
+  color: #333;
+  font-size: 14px;
+}
+
+.courses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.course-option {
+  font-size: 14px;
+  color: #333;
+}
+
+.job-list {
+  list-style-type: disc;
+  margin-left: 20px;
+  color: #333;
+  font-size: 14px;
+}
+
+.submit-btn-wrapper {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.submit-btn {
+  background-color: crimson;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: darkred;
+}
+
+/* Chatbot section */
+.chatbot-section {
+  margin-top: 50px;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
+}
+
+.chat-window {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.chat-bubble {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-width: 80%;
+}
+
+.bot-message {
+  background: #e6f0ff;
+  color: #003366;
+  align-self: flex-start;
+}
+
+.user-message {
+  background: #f0f0f0;
+  color: #333;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.chat-input-section {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.chat-submit-btn {
+  background-color: crimson;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chat-submit-btn:hover {
+  background-color: darkred;
+}
