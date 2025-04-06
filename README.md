@@ -85,3 +85,26 @@ Ensure Ollama is installed and running, then run:
 
 ollama run gemma:2b
 ```
+
+---
+
+## 🌟 Support
+
+If you found this project helpful, please consider leaving a ⭐️ on GitHub — it really helps us grow!
+
+[![Star on GitHub](https://img.shields.io/github/stars/YashaswiniSampath/CoursRecommendationSystem?style=social)](https://github.com/YashaswiniSampath/CoursRecommendationSystem)
+
+---
+
+## 🎥 Demo Video
+
+Check out the full walkthrough of the project on YouTube:  
+[📺 Watch Now](https://www.youtube.com/watch?v=rUpop8_ctis)
+
+---
+
+## 🔗 Repository
+
+GitHub Source Code:  
+[🔗 https://github.com/YashaswiniSampath/CoursRecommendationSystem](https://github.com/YashaswiniSampath/CoursRecommendationSystem)
+
